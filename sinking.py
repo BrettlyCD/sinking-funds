@@ -1,9 +1,15 @@
 import pandas as pd
 import numpy as np
+import json
 import datetime
 
-from sinking_df import sinking_funds
+import sinking_df
 
+#set standard veriables
+json_path = 'data/exp.json'
+json_variable = 'expenses'
+input_options = ['A','B','C','D','E']
+alert = "Option not available."
 
 #Define user input/validation fuctions
 def valid_float(message):
@@ -71,6 +77,7 @@ def exp_in_list(message, list, match_wanted):
             else:
                 print('Expense not in list, please enter a valid expense: ')
 
+
 #define action functions
 def add_exp(json_path, json_var):
     "Take user inputs, create a dictionary, and write that dictionary to a json file."
@@ -94,96 +101,133 @@ def add_exp(json_path, json_var):
 
 def update_exp(json_path, json_var):
     "Take user inputs and update the value of their choice."
-    #user input validated against list of itmes
-    item_to_update = exp_in_list("Which expense would you like to update?: \n",get_items(json_path, json_var), True)
+    #load current data and check for at least one item
+    sinking_funds = sinking_df.refresh_df()
+    if sinking_funds.empty == True:
+        print('There are no active expenses able to be updated.')
+    else:    
+        #user input validated against list of itmes
+        item_to_update = exp_in_list("Which expense would you like to update?: \n",get_items(json_path, json_var), True)
 
-    #user input on which field to update
-    field_choice = valid_select("Which field would you like to update?:\nA) Title\nB) Cadence\nC) Date Added\nD) First Due\nE) Amount", 5)
-    if field_choice == 'A':
-        field = 'title'
-    elif field_choice == 'B':
-        field = 'cadence'
-    elif field_choice == 'C':
-        field = 'date_added'
-    elif field_choice == 'D':
-        field = 'first_due'
-    elif field_choice == 'E':
-        field = 'amount'
+        #user input on which field to update
+        field_choice = valid_select("Which field would you like to update?:\nA) Title\nB) Cadence\nC) Date Added\nD) First Due\nE) Amount", 5)
+        if field_choice == 'A':
+            field = 'title'
+        elif field_choice == 'B':
+            field = 'cadence'
+        elif field_choice == 'C':
+            field = 'date_added'
+        elif field_choice == 'D':
+            field = 'first_due'
+        elif field_choice == 'E':
+            field = 'amount'
 
-    #user input to update field, using an if statement to decice which input validation to use
-    if field == ('title'):
-        new_value = user_input_text("New Title: ")
-    elif field in ('cadence', 'amount'):
-        new_value = valid_float("New Value: ")
-    else:
-        new_value = valid_date("New Date: ")
-    
-    #write to JSON
-    with open(json_path) as f:
-        data = json.load(f)
-        temp = data[json_var]
-        index = next((index for (index, d) in enumerate(temp) if d['title'] == item_to_update), None)
-        temp[index][field] = new_value
-        with open('../data/exp.json', 'w') as f:
-            json.dump(data, f)
+        #user input to update field, using an if statement to decice which input validation to use
+        if field == ('title'):
+            new_value = user_input_text("New Title: ")
+        elif field in ('cadence', 'amount'):
+            new_value = valid_float("New Value: ")
+        else:
+            new_value = valid_date("New Date: ")
+        
+        #write to JSON
+        with open(json_path) as f:
+            data = json.load(f)
+            temp = data[json_var]
+            index = next((index for (index, d) in enumerate(temp) if d['title'] == item_to_update), None)
+            temp[index][field] = new_value
+            with open(json_path, 'w') as f:
+                json.dump(data, f)
 
 def delete_expense(json_path, json_var):
-    item_to_delete = exp_in_list("Which expense would you like to delete?: \n",get_items(json_path, json_var), True)
-    
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-        temp = data[json_var]
-        temp[:] = [d for d in temp if d.get('title') != item_to_delete]
-        with open(json_path, 'w') as f:
-            json.dump(data, f)
+    "Take user inputs and delete the value of their choice."
+    #load current data and check for at least one item
+    sinking_funds = sinking_df.refresh_df()
+    if sinking_funds.empty == True:
+        print('There are no active expenses to delete.')
+    else:
+        item_to_delete = exp_in_list("Which expense would you like to delete?: \n",get_items(json_path, json_var), True)
+        
+        with open(json_path, 'r') as f:
+            data = json.load(f)
+            temp = data[json_var]
+            temp[:] = [d for d in temp if d.get('title') != item_to_delete]
+            with open(json_path, 'w') as f:
+                json.dump(data, f)
 
-def view_expenses(df, index_col):
+def view_expenses(index_col):
     print("Active Expenses: \n")
-    print(df.set_index(index_col))
+    df = pd.json_normalize(pd.read_json('data/exp.json')['expenses'])
+    if df.empty == True:
+        print('There are no active expenses.')
+    else:
+        print(df.set_index(index_col))
+
+def monthly_report():
+    """Build out the data model with the current json file and print a report"""
+    #Parse df down to dictionary of upcoming payments
+    sinking_funds = sinking_df.refresh_df()
+    if sinking_funds.empty == True:
+        print('There are no active expenses, please add an expense and then run the report again.')
+    else:    
+        due_this_month = sinking_funds[sinking_funds['current_period_disburse'] < 0][['title','due_next','amount']]
+        due_dictionary = due_this_month.set_index('title').T.to_dict('list')
 
 
-#Parse df down to dictionary of upcoming payments
-due_this_month = sinking_funds[sinking_funds['current_period_disburse'] < 0][['item','due_next','amount']]
-due_dictionary = due_this_month.set_index('item').T.to_dict('list')
+        #Calculate aggregations from pandas df
+        expected_beginning_balance = sinking_funds['exp_current_balance'].sum()
+        current_period_savings = sinking_funds['monthly_sinking'].sum()
+        current_period_disbursements = sinking_funds['current_period_disburse'].sum()
+        net_period_activity = sinking_funds['current_month_activity'].sum()
+        target_ending_balance = sinking_funds['target_ending_balance'].sum()
 
+        #Build interface
+        print("\n\nYou're expected current balance is: $" + str("{:.2f}".format(expected_beginning_balance)) + ".\n")
 
-#Calculate aggregations from pandas df
-expected_beginning_balance = sinking_funds['exp_current_balance'].sum()
-current_period_savings = sinking_funds['monthly_sinking'].sum()
-current_period_disbursements = sinking_funds['current_period_disburse'].sum()
-net_period_activity = sinking_funds['current_month_activity'].sum()
-target_ending_balance = sinking_funds['target_ending_balance'].sum()
+        actual_beg_balance = valid_float("What is your actual current balance?: \n")
+
+        #calculate new features with that input
+        actual_period_activity = target_ending_balance - actual_beg_balance
+        balance_adj = expected_beginning_balance - actual_beg_balance
+
+        #print user summary
+        print("\n\n"+"-"*10 + "USER REPORT" + "-"*10)
+
+        print("\nYou're expected current balance is: $" + str("{:.2f}".format(expected_beginning_balance)) + ".")
+        print("You're actual current balance is: $" + str("{:.2f}".format(actual_beg_balance)) + ".\n")
+
+        if actual_period_activity < 0:
+            print("You should move $" + str("{:.2f}".format(-actual_period_activity)) + " from your sinking funds balance to your bill-paying account.")
+        else:
+            print("You should move $" + str("{:.2f}".format(actual_period_activity)) + " from your checking account to your sinking funds balance.")
+        print("This is made up of: \n- $" + str("{:.2f}".format(current_period_savings)) + " savings for future expenses\n- $" + str("{:.2f}".format(-current_period_disbursements)) + " of disbursements for current month expenses\n- $"+ str("{:.2f}".format(balance_adj)) + " of balance adjustments\n")
+
+        print("With these changes, your ending balance will be: $" + str("{:.2f}".format(target_ending_balance)) + ".\n")
+        
+        print("\nPAYMENTS DUE THIS MONTH:\n")
+        for key, value in due_dictionary.items():
+            print(key, 'is due on', value[0].strftime('%m-%d-%Y'), ': $', str("{:.2f}".format(value[1])))
+        
+        print("\n\n"+"-"*10 + "END REPORT" + "-"*10)
 
 
 #define application
-def user_interface():
-    print("\n\nYou're expected current balance is: $" + str("{:.2f}".format(expected_beginning_balance)) + ".\n")
+def application():
+    print("\n\n"+"-"*10 + "SINKING FUNDS MANAGER" + "-"*10)
+    #main menu items
+    menu_choice = valid_select("What function would you like to perform?:\nA) Run Monthly Report\nB) View Active Expenses\nC) Add New Expense\nD) Update Expense Item\nE) Delete Expense\n", 5)
+    if menu_choice == 'A':
+        monthly_report()
+    elif menu_choice == 'B':
+        view_expenses('title')
+    elif menu_choice == 'C':
+        add_exp(json_path, json_variable)
+    elif menu_choice == 'D':
+        update_exp(json_path, json_variable)
+    elif menu_choice == 'E':
+        delete_expense(json_path, json_variable)
 
-    actual_beg_balance = valid_float("What is your actual current balance?: \n")
-
-    #calculate new features with that input
-    actual_period_activity = target_ending_balance - actual_beg_balance
-    balance_adj = expected_beginning_balance - actual_beg_balance
-
-    #print user summary
-    print("\n\n"+"-"*10 + "USER REPORT" + "-"*10)
-
-    print("\nYou're expected current balance is: $" + str("{:.2f}".format(expected_beginning_balance)) + ".")
-    print("You're actual current balance is: $" + str("{:.2f}".format(actual_beg_balance)) + ".\n")
-
-    if actual_period_activity < 0:
-        print("You should move $" + str("{:.2f}".format(-actual_period_activity)) + " from your sinking funds balance to your bill-paying account.")
-    else:
-        print("You should move $" + str("{:.2f}".format(actual_period_activity)) + " from your checking account to your sinking funds balance.")
-    print("This is made up of: \n- $" + str("{:.2f}".format(current_period_savings)) + " savings for future expenses\n- $" + str("{:.2f}".format(-current_period_disbursements)) + " of disbursements for current month expenses\n- $"+ str("{:.2f}".format(balance_adj)) + " of balance adjustments\n")
-
-    print("With these changes, your ending balance will be: $" + str("{:.2f}".format(target_ending_balance)) + ".\n")
-    
-    print("\nPAYMENTS DUE THIS MONTH:\n")
-    for key, value in due_dictionary.items():
-        print(key, 'is due on', value[0].strftime('%m-%d-%Y'), ': $', str("{:.2f}".format(value[1])))
-    
-    print("\n\n"+"-"*10 + "END REPORT" + "-"*10)
 
 #run application
-user_interface()
+if __name__ == '__main__':
+    application()
