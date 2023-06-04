@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 ### DEFINE FUNCTION WITH ALL DF PROCESSES ###
 def refresh_df():
     #Load expenses json to a pandas df
-    exp = pd.json_normalize(pd.read_json('exp.json')['expenses'])
+    exp = pd.json_normalize(pd.read_json('../data/exp.json')['expenses'])
 
     #check for blank df
     if exp.empty == True:
@@ -77,7 +77,7 @@ def refresh_df():
 
         #With this processed dataframe, I want to create a copy that we'll pull into another file for user interaction.
         sinking_funds = exp.copy()
-
+        
         return sinking_funds
 
 if __name__ == '__main__':

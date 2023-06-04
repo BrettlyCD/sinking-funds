@@ -3,7 +3,7 @@ import numpy as np
 import json
 import datetime
 
-import data.sinking_df as sinking_df
+import sinking_df as sinking_df
 
 #set standard veriables
 json_path = 'data/exp.json'
@@ -157,7 +157,7 @@ def delete_expense(json_path, json_var):
 
 def view_expenses(index_col):
     print("Active Expenses: \n")
-    df = pd.json_normalize(pd.read_json('data/exp.json')['expenses'])
+    df = pd.json_normalize(pd.read_json('../data/exp.json')['expenses'])
     if df.empty == True:
         print('There are no active expenses.')
     else:
