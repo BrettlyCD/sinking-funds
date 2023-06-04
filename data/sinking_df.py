@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 ### DEFINE FUNCTION WITH ALL DF PROCESSES ###
 def refresh_df():
     #Load expenses json to a pandas df
-    exp = pd.json_normalize(pd.read_json('data/exp.json')['expenses'])
+    exp = pd.json_normalize(pd.read_json('exp.json')['expenses'])
 
     #check for blank df
     if exp.empty == True:

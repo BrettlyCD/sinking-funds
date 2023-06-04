@@ -3,7 +3,7 @@ import numpy as np
 import json
 import datetime
 
-import sinking_df
+import data.sinking_df as sinking_df
 
 #set standard veriables
 json_path = 'data/exp.json'
