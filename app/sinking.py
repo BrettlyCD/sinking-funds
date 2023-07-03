@@ -6,7 +6,7 @@ import datetime
 import sinking_df as sinking_df
 
 #set standard veriables
-json_path = 'data/exp.json'
+json_path = '../data/exp.json'
 json_variable = 'expenses'
 input_options = ['A','B','C','D','E']
 alert = "Option not available."

@@ -28,7 +28,7 @@ def refresh_df():
             if payment_date >= datetime.datetime.today():
                 last_paid.append(np.nan) 
             else:
-                while (((datetime.datetime.today().year-payment_date.dt.year)*12) + ((datetime.datetime.today().month-payment_date.dt.month))) > row['cadence']:
+                while (((datetime.datetime.today().year-payment_date.year)*12) + ((datetime.datetime.today().month-payment_date.month))) > row['cadence']:
                     payment_date += relativedelta(months=row['cadence'])
                 last_paid.append(payment_date)
 
