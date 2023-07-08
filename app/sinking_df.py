@@ -2,12 +2,27 @@ import pandas as pd
 import numpy as np
 import datetime
 from dateutil.relativedelta import relativedelta
+from pathlib import Path #for checking if the json file exists
+import json
 
 
 ### DEFINE FUNCTION WITH ALL DF PROCESSES ###
 def refresh_df():
-    #Load expenses json to a pandas df
-    exp = pd.json_normalize(pd.read_json('../data/exp.json')['expenses'])
+    my_file = Path('../data/exp.json') #set path to json file
+    
+    #try to load the file if it exists, if not create the template for it. If it does - load it to a dataframe
+    try:
+        my_abs_path = my_file.resolve(strict=True)
+    except FileNotFoundError:
+        #if doesn't exist, create the blank template
+        json_template = {'expenses': []}
+        with open('../data/exp.json', 'w') as file:
+            json.dump(json_template, file)
+        #then load in the empty df for next step
+        exp = pd.json_normalize(pd.read_json('../data/exp.json')['expenses'])
+    else:
+        #Load expenses json to a pandas df
+        exp = pd.json_normalize(pd.read_json('../data/exp.json')['expenses'])
 
     #check for blank df
     if exp.empty == True:

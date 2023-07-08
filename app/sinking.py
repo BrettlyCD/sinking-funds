@@ -8,7 +8,7 @@ import sinking_df as sinking_df
 #set standard veriables
 json_path = '../data/exp.json'
 json_variable = 'expenses'
-input_options = ['A','B','C','D','E']
+input_options = ['A','B','C','D','E','Q']
 alert = "Option not available."
 
 #Define user input/validation fuctions
@@ -99,11 +99,10 @@ def add_exp(json_path, json_var):
         with open(json_path, 'w') as f:
             json.dump(data, f)
 
-def update_exp(json_path, json_var):
+def update_exp(df, json_path, json_var):
     "Take user inputs and update the value of their choice."
     #load current data and check for at least one item
-    sinking_funds = sinking_df.refresh_df()
-    if sinking_funds.empty == True:
+    if df.empty == True:
         print('There are no active expenses able to be updated.')
     else:    
         #user input validated against list of itmes
@@ -139,11 +138,10 @@ def update_exp(json_path, json_var):
             with open(json_path, 'w') as f:
                 json.dump(data, f)
 
-def delete_expense(json_path, json_var):
+def delete_expense(df, json_path, json_var):
     "Take user inputs and delete the value of their choice."
     #load current data and check for at least one item
-    sinking_funds = sinking_df.refresh_df()
-    if sinking_funds.empty == True:
+    if df.empty == True:
         print('There are no active expenses to delete.')
     else:
         item_to_delete = exp_in_list("Which expense would you like to delete?: \n",get_items(json_path, json_var), True)
@@ -163,23 +161,22 @@ def view_expenses(index_col):
     else:
         print(df.set_index(index_col))
 
-def monthly_report():
+def monthly_report(df):
     """Build out the data model with the current json file and print a report"""
     #Parse df down to dictionary of upcoming payments
-    sinking_funds = sinking_df.refresh_df()
-    if sinking_funds.empty == True:
+    if df.empty == True:
         print('There are no active expenses, please add an expense and then run the report again.')
     else:    
-        due_this_month = sinking_funds[sinking_funds['current_period_disburse'] < 0][['title','due_next','amount']]
+        due_this_month = df[df['current_period_disburse'] < 0][['title','due_next','amount']]
         due_dictionary = due_this_month.set_index('title').T.to_dict('list')
 
 
         #Calculate aggregations from pandas df
-        expected_beginning_balance = sinking_funds['exp_current_balance'].sum()
-        current_period_savings = sinking_funds['monthly_sinking'].sum()
-        current_period_disbursements = sinking_funds['current_period_disburse'].sum()
-        net_period_activity = sinking_funds['current_month_activity'].sum()
-        target_ending_balance = sinking_funds['target_ending_balance'].sum()
+        expected_beginning_balance = df['exp_current_balance'].sum()
+        current_period_savings = df['monthly_sinking'].sum()
+        current_period_disbursements = df['current_period_disburse'].sum()
+        net_period_activity = df['current_month_activity'].sum()
+        target_ending_balance = df['target_ending_balance'].sum()
 
         #Build interface
         print("\n\nYou're expected current balance is: $" + str("{:.2f}".format(expected_beginning_balance)) + ".\n")
@@ -213,19 +210,24 @@ def monthly_report():
 
 #define application
 def application():
-    print("\n\n"+"-"*10 + "SINKING FUNDS MANAGER" + "-"*10)
-    #main menu items
-    menu_choice = valid_select("What function would you like to perform?:\nA) Run Monthly Report\nB) View Active Expenses\nC) Add New Expense\nD) Update Expense Item\nE) Delete Expense\n", 5)
-    if menu_choice == 'A':
-        monthly_report()
-    elif menu_choice == 'B':
-        view_expenses('title')
-    elif menu_choice == 'C':
-        add_exp(json_path, json_variable)
-    elif menu_choice == 'D':
-        update_exp(json_path, json_variable)
-    elif menu_choice == 'E':
-        delete_expense(json_path, json_variable)
+    sinking_funds = sinking_df.refresh_df() #run refresh of dataframe from json in data/exp.json
+    while True:
+        print("\n\n"+"-"*10 + "SINKING FUNDS MANAGER" + "-"*10)
+        #main menu items
+        menu_choice = valid_select("What function would you like to perform?:\nA) Run Monthly Report\nB) View Active Expenses\nC) Add New Expense\nD) Update Expense Item\nE) Delete Expense\nQ) Quit Application\n", 6)
+        if menu_choice == 'A':
+            monthly_report(sinking_funds)
+        elif menu_choice == 'B':
+            view_expenses('title')
+        elif menu_choice == 'C':
+            add_exp(json_path, json_variable)
+        elif menu_choice == 'D':
+            update_exp(sinking_funds, json_path, json_variable)
+        elif menu_choice == 'E':
+            delete_expense(sinking_funds, json_path, json_variable)
+        elif menu_choice == 'Q':
+            print('Closing Application...\n')
+            break
 
 
 #run application
