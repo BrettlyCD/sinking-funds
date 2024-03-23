@@ -162,12 +162,13 @@ def delete_expense(df, json_path, json_var):
                 json.dump(data, f)
 
 def view_expenses(index_col):
-    print("Active Expenses: \n")
+    print('\n\n----------Active Expenses----------\n')
     df = pd.json_normalize(pd.read_json('../data/exp.json')['expenses'])
     if df.empty == True:
         print('There are no active expenses.')
     else:
         print(df.set_index(index_col))
+    print('\n\n-----------------------------------\n')
 
 def monthly_report(df):
     """Build out the data model with the current json file and print a report"""
@@ -230,6 +231,7 @@ def application():
         elif menu_choice == 'C':
             add_exp(json_path, json_variable)
         elif menu_choice == 'D':
+            view_expenses('title')
             update_exp(sinking_funds, json_path, json_variable)
         elif menu_choice == 'E':
             delete_expense(sinking_funds, json_path, json_variable)
