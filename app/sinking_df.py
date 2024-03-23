@@ -97,3 +97,5 @@ def refresh_df():
 
 if __name__ == '__main__':
     refresh_df()
+    sf = refresh_df()
+    print(sf)
