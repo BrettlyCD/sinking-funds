@@ -8,7 +8,7 @@ import sinking_df as sinking_df
 #set standard veriables
 json_path = '../data/exp.json'
 json_variable = 'expenses'
-input_options = ['A','B','C','D','E','Q']
+input_options = ['A','B','C','D','E','F','Q']
 alert = "Option not available."
 
 #Define user input/validation fuctions
@@ -113,17 +113,21 @@ def update_exp(df, json_path, json_var):
         if field_choice == 'A':
             field = 'title'
         elif field_choice == 'B':
-            field = 'cadence'
+            field = 'type'
         elif field_choice == 'C':
-            field = 'date_added'
+            field = 'cadence'
         elif field_choice == 'D':
-            field = 'first_due'
+            field = 'date_added'
         elif field_choice == 'E':
+            field = 'first_due'
+        elif field_choice == 'F':
             field = 'amount'
 
         #user input to update field, using an if statement to decice which input validation to use
         if field == ('title'):
             new_value = user_input_text("New Title: ")
+        elif field == ('type'):
+            new_value = valid_select("Recurring or One-Time:\n\nA) Recurring\nB) One-Time")
         elif field in ('cadence', 'amount'):
             new_value = valid_float("New Value: ")
         else:
@@ -167,7 +171,7 @@ def monthly_report(df):
     if df.empty == True:
         print('There are no active expenses, please add an expense and then run the report again.')
     else:    
-        due_this_month = df[df['current_period_disburse'] < 0][['title','due_next','amount']]
+        due_this_month = df[df['current_period_disburse'] < 0][['title','type','due_next','amount']]
         due_dictionary = due_this_month.set_index('title').T.to_dict('list')
 
 
