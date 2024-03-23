@@ -106,10 +106,10 @@ def update_exp(df, json_path, json_var):
         print('There are no active expenses able to be updated.')
     else:    
         #user input validated against list of itmes
-        item_to_update = exp_in_list("\nWhich expense would you like to update?: \n\nInput: ",get_items(json_path, json_var), True)
+        item_to_update = exp_in_list("\nWhich expense would you like to update?: \n\nInput Expense Title: ",get_items(json_path, json_var), True)
 
         #user input on which field to update
-        field_choice = valid_select("\nWhich field would you like to update?:\nA) Title\nB) Type\nC) Cadence\nD) Date Added\nE) First Due\nF) Amount\n", 5)
+        field_choice = valid_select("\nWhich field would you like to update?:\nA) Title\nB) Type\nC) Cadence\nD) Date Added\nE) First Due\nF) Amount\n\nInput: ", 5)
         if field_choice == 'A':
             field = 'title'
         elif field_choice == 'B':
@@ -127,7 +127,7 @@ def update_exp(df, json_path, json_var):
         if field == ('title'):
             new_value = user_input_text("\nNew Title: ")
         elif field == ('type'):
-            selection = valid_select("\nRecurring or One-Time:\n\nA) Recurring\nB) One-Time", 2)
+            selection = valid_select("\nRecurring or One-Time:\n\nA) Recurring\nB) One-Time\n", 2)
             if selection == 'A':
                 new_value = 'Recurring'
             else:
