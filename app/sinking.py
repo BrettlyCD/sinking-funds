@@ -106,10 +106,10 @@ def update_exp(df, json_path, json_var):
         print('There are no active expenses able to be updated.')
     else:    
         #user input validated against list of itmes
-        item_to_update = exp_in_list("Which expense would you like to update?: \n",get_items(json_path, json_var), True)
+        item_to_update = exp_in_list("\nWhich expense would you like to update?: \n\nInput: ",get_items(json_path, json_var), True)
 
         #user input on which field to update
-        field_choice = valid_select("Which field would you like to update?:\nA) Title\nB) Cadence\nC) Date Added\nD) First Due\nE) Amount", 5)
+        field_choice = valid_select("\nWhich field would you like to update?:\nA) Title\nB) Type\nC) Cadence\nD) Date Added\nE) First Due\nF) Amount\n", 5)
         if field_choice == 'A':
             field = 'title'
         elif field_choice == 'B':
@@ -125,13 +125,13 @@ def update_exp(df, json_path, json_var):
 
         #user input to update field, using an if statement to decice which input validation to use
         if field == ('title'):
-            new_value = user_input_text("New Title: ")
+            new_value = user_input_text("\nNew Title: ")
         elif field == ('type'):
-            new_value = valid_select("Recurring or One-Time:\n\nA) Recurring\nB) One-Time", 2)
+            new_value = valid_select("\nRecurring or One-Time:\n\nA) Recurring\nB) One-Time", 2)
         elif field in ('cadence', 'amount'):
-            new_value = valid_float("New Value: ")
+            new_value = valid_float("\nNew Value: ")
         else:
-            new_value = valid_date("New Date: ")
+            new_value = valid_date("\nNew Date: ")
         
         #write to JSON
         with open(json_path) as f:
