@@ -127,7 +127,7 @@ def update_exp(df, json_path, json_var):
         if field == ('title'):
             new_value = user_input_text("New Title: ")
         elif field == ('type'):
-            new_value = valid_select("Recurring or One-Time:\n\nA) Recurring\nB) One-Time")
+            new_value = valid_select("Recurring or One-Time:\n\nA) Recurring\nB) One-Time", 2)
         elif field in ('cadence', 'amount'):
             new_value = valid_float("New Value: ")
         else:
@@ -218,7 +218,7 @@ def application():
     while True:
         print("\n\n"+"-"*10 + "SINKING FUNDS MANAGER" + "-"*10)
         #main menu items
-        menu_choice = valid_select("What function would you like to perform?:\nA) Run Monthly Report\nB) View Active Expenses\nC) Add New Expense\nD) Update Expense Item\nE) Delete Expense\nQ) Quit Application\n", 6)
+        menu_choice = valid_select("What function would you like to perform?:\nA) Run Monthly Report\nB) View Active Expenses\nC) Add New Expense\nD) Update Expense Item\nE) Delete Expense\nQ) Quit Application\n", 7)
         if menu_choice == 'A':
             monthly_report(sinking_funds)
         elif menu_choice == 'B':
