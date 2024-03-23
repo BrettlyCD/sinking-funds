@@ -63,18 +63,21 @@ def refresh_df():
 
         exp['due_next'] = due_dates
 
-        #Create a months until due date field for potential future use
-        exp['months_till_due'] = (((exp.due_next.dt.year-exp.date_added.dt.year)*12) + ((exp.due_next.dt.month-exp.date_added.dt.month))).astype(int)
-
-        #Calculate how many months to save in total based on when we started. Adding the +1 to the second condition to include the starting month.
-        exp['months_to_save'] = np.where(exp['tracked_months'] >= exp['cadence'], exp['cadence'], (((exp.due_next.dt.year-exp.date_added.dt.year)*12) + ((exp.due_next.dt.month-exp.date_added.dt.month))+1).astype(int))
+        #Calculate months available for saving
+        exp['months_to_save'] = np.where(exp['last_disbursed'].isnull(),
+                                         (((exp['due_next'].dt.year - exp['date_added'].dt.year) * 12) + (exp['due_next'].dt.month - exp['date_added'].dt.month)),
+                                         (((exp['due_next'].dt.year - exp['last_disbursed'].dt.year) * 12) + (exp['due_next'].dt.month - exp['last_disbursed'].dt.month))
+                                        ).astype(int)
 
         #Calculate how much to save for each category each month.
         exp['monthly_sinking'] = round(exp['amount'] / exp['months_to_save'],2)
         exp.replace([np.inf, -np.inf], np.nan, inplace=True) #adjust for any divide by 0 issues
 
         #Formula for how many months of saving you've already done on this cycle, which we'll use for estimated current balance
-        exp['current_buildup'] = np.where(exp['last_disbursed'].isnull(), exp['tracked_months'], (((datetime.datetime.today().year-exp.last_disbursed.dt.year)*12) + ((datetime.datetime.today().month-exp.last_disbursed.dt.month))))
+        #the -1 at the end makes it so the month of the expense is also included in the saving timeframe. 
+        exp['current_buildup'] = np.where(exp['last_disbursed'].isnull(),
+                                  exp['tracked_months'],
+                                  (((datetime.datetime.today().year-exp.last_disbursed.dt.year)*12) + ((datetime.datetime.today().month-exp.last_disbursed.dt.month))-1))
         #Convert to an integer
         exp['current_buildup'] = exp['current_buildup'].fillna(0).astype(int) #use fillna to make the conversion work with NaN values
 
@@ -82,10 +85,14 @@ def refresh_df():
         exp['exp_current_balance'] = exp['current_buildup'] * exp['monthly_sinking']
 
         #Calculate a disbursement, if there is any needed this month.
-        exp['current_period_disburse'] = np.where((exp['due_next'].dt.month == datetime.datetime.today().month) & (exp['due_next'].dt.year == datetime.datetime.today().year), -exp['amount'], 0)
+        exp['current_period_disburse'] = np.where((exp['due_next'].dt.month == datetime.datetime.today().month) & (exp['due_next'].dt.year == datetime.datetime.today().year),
+                                                  -exp['amount'],
+                                                  0)
 
-        #Calculate what the ending balance should be after transfers
-        exp['target_ending_balance'] = exp['exp_current_balance'] + exp['monthly_sinking'] + exp['current_period_disburse']
+        #Calculate what the ending balance should be after transfers - seperate logic for recurring vs. one-time
+        exp['target_ending_balance'] = np.where((exp['type'] == 'One-Time') & ~(exp['last_disbursed'].isna()),
+                                        0,
+                                        exp['exp_current_balance'] + exp['monthly_sinking'] + exp['current_period_disburse'])
 
         #Field for the inidivual item net activity
         exp['current_month_activity'] = exp['target_ending_balance'] - exp['exp_current_balance']
@@ -97,3 +104,5 @@ def refresh_df():
 
 if __name__ == '__main__':
     refresh_df()
+    sf = refresh_df()
+    print(sf)

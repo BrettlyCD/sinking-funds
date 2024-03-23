@@ -8,7 +8,7 @@ import sinking_df as sinking_df
 #set standard veriables
 json_path = '../data/exp.json'
 json_variable = 'expenses'
-input_options = ['A','B','C','D','E','Q']
+input_options = ['A','B','C','D','E','F','Q']
 alert = "Option not available."
 
 #Define user input/validation fuctions
@@ -106,28 +106,36 @@ def update_exp(df, json_path, json_var):
         print('There are no active expenses able to be updated.')
     else:    
         #user input validated against list of itmes
-        item_to_update = exp_in_list("Which expense would you like to update?: \n",get_items(json_path, json_var), True)
+        item_to_update = exp_in_list("\nWhich expense would you like to update?: \n\nInput Expense Title: ",get_items(json_path, json_var), True)
 
         #user input on which field to update
-        field_choice = valid_select("Which field would you like to update?:\nA) Title\nB) Cadence\nC) Date Added\nD) First Due\nE) Amount", 5)
+        field_choice = valid_select("\nWhich field would you like to update?:\nA) Title\nB) Type\nC) Cadence\nD) Date Added\nE) First Due\nF) Amount\n\nInput: ", 5)
         if field_choice == 'A':
             field = 'title'
         elif field_choice == 'B':
-            field = 'cadence'
+            field = 'type'
         elif field_choice == 'C':
-            field = 'date_added'
+            field = 'cadence'
         elif field_choice == 'D':
-            field = 'first_due'
+            field = 'date_added'
         elif field_choice == 'E':
+            field = 'first_due'
+        elif field_choice == 'F':
             field = 'amount'
 
         #user input to update field, using an if statement to decice which input validation to use
         if field == ('title'):
-            new_value = user_input_text("New Title: ")
+            new_value = user_input_text("\nNew Title: ")
+        elif field == ('type'):
+            selection = valid_select("\nRecurring or One-Time:\n\nA) Recurring\nB) One-Time\n", 2)
+            if selection == 'A':
+                new_value = 'Recurring'
+            else:
+                new_value = 'One-Time'
         elif field in ('cadence', 'amount'):
-            new_value = valid_float("New Value: ")
+            new_value = valid_float("\nNew Value: ")
         else:
-            new_value = valid_date("New Date: ")
+            new_value = valid_date("\nNew Date: ")
         
         #write to JSON
         with open(json_path) as f:
@@ -154,12 +162,13 @@ def delete_expense(df, json_path, json_var):
                 json.dump(data, f)
 
 def view_expenses(index_col):
-    print("Active Expenses: \n")
+    print('\n\n----------Active Expenses----------\n')
     df = pd.json_normalize(pd.read_json('../data/exp.json')['expenses'])
     if df.empty == True:
         print('There are no active expenses.')
     else:
         print(df.set_index(index_col))
+    print('\n\n-----------------------------------\n')
 
 def monthly_report(df):
     """Build out the data model with the current json file and print a report"""
@@ -167,7 +176,7 @@ def monthly_report(df):
     if df.empty == True:
         print('There are no active expenses, please add an expense and then run the report again.')
     else:    
-        due_this_month = df[df['current_period_disburse'] < 0][['title','due_next','amount']]
+        due_this_month = df[df['current_period_disburse'] < 0][['title','type','due_next','amount']]
         due_dictionary = due_this_month.set_index('title').T.to_dict('list')
 
 
@@ -203,7 +212,7 @@ def monthly_report(df):
         
         print("\nPAYMENTS DUE THIS MONTH:\n")
         for key, value in due_dictionary.items():
-            print(key, 'is due on', value[0].strftime('%m-%d-%Y'), ': $', str("{:.2f}".format(value[1])))
+            print(key, 'is due on', value[1].strftime('%m-%d-%Y'), ': $', str("{:.2f}".format(value[2])))
         
         print("\n\n"+"-"*10 + "END REPORT" + "-"*10)
 
@@ -214,7 +223,7 @@ def application():
     while True:
         print("\n\n"+"-"*10 + "SINKING FUNDS MANAGER" + "-"*10)
         #main menu items
-        menu_choice = valid_select("What function would you like to perform?:\nA) Run Monthly Report\nB) View Active Expenses\nC) Add New Expense\nD) Update Expense Item\nE) Delete Expense\nQ) Quit Application\n", 6)
+        menu_choice = valid_select("What function would you like to perform?:\nA) Run Monthly Report\nB) View Active Expenses\nC) Add New Expense\nD) Update Expense Item\nE) Delete Expense\nQ) Quit Application\n", 7)
         if menu_choice == 'A':
             monthly_report(sinking_funds)
         elif menu_choice == 'B':
@@ -222,6 +231,7 @@ def application():
         elif menu_choice == 'C':
             add_exp(json_path, json_variable)
         elif menu_choice == 'D':
+            view_expenses('title')
             update_exp(sinking_funds, json_path, json_variable)
         elif menu_choice == 'E':
             delete_expense(sinking_funds, json_path, json_variable)
