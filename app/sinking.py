@@ -127,7 +127,11 @@ def update_exp(df, json_path, json_var):
         if field == ('title'):
             new_value = user_input_text("\nNew Title: ")
         elif field == ('type'):
-            new_value = valid_select("\nRecurring or One-Time:\n\nA) Recurring\nB) One-Time", 2)
+            selection = valid_select("\nRecurring or One-Time:\n\nA) Recurring\nB) One-Time", 2)
+            if selection == 'A':
+                new_value = 'Recurring'
+            else:
+                new_value = 'One-Time'
         elif field in ('cadence', 'amount'):
             new_value = valid_float("\nNew Value: ")
         else:
