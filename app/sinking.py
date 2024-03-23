@@ -207,7 +207,7 @@ def monthly_report(df):
         
         print("\nPAYMENTS DUE THIS MONTH:\n")
         for key, value in due_dictionary.items():
-            print(key, 'is due on', value[0].strftime('%m-%d-%Y'), ': $', str("{:.2f}".format(value[1])))
+            print(key, 'is due on', value[1].strftime('%m-%d-%Y'), ': $', str("{:.2f}".format(value[2])))
         
         print("\n\n"+"-"*10 + "END REPORT" + "-"*10)
 
