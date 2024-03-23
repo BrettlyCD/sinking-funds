@@ -11,3 +11,12 @@ Setting aside money each month is easy enough with automatic savings transfers, 
 ## How it works
 
 This python application takes your inputs, prompting for necessary info and storing it in a json file. It then converts that json file into a pandas DataFrame to perform calculations and keep track of what you should be saving each month and how much you should be disbursing those funds to use.
+
+
+
+
+
+# Ideas
+Make it possible to add in a starting balance
+Make it toggleable for each fund to save 100% in the month prior vs. have the last portion saved on month of.
+Create reset option - this could be based off existing with a few manual changes. But maybe make easier?
